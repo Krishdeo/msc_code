@@ -75,7 +75,6 @@ def main():
 	net.start()				#start the network
 	time.sleep(0.5)
 
-	'''
 	#just to make sure theres full connectivity
 	print("----------------------------------------")
 	t1 = time.time()
@@ -83,7 +82,6 @@ def main():
 	t2 = time.time()
 	time.sleep(0.5)
 	print("Total time to ping: " + str(t2 - t1))
-	'''
 
 	#testing parameters
 	ti = "2"  # -i reporting interval

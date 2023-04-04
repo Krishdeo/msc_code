@@ -119,47 +119,6 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
 		for ids in allocated:
 			need[ids] = current[ids] - allocated[ids] if current[ids] >= allocated[ids] else 0
 			unused[ids] = allocated[ids] - current[ids] if current[ids] < allocated[ids] else 0
-		#end for
-
-		new_meter = {}
-		for i in need:	# for all need values
-			new_meter[i] = min(allocated[i], current[i])	# start off by their initially set allocation
-			if need[i] > 0:			# if any meter is in need
-				for j in unused:	# then check if any unused is available
-					if unused[j] > 0:			# if it is
-						give = min(need[i], unused[j])	# we can only give min of need and unused
-						need[i] -= give					# need becomes less
-						unused[j] -= give				# unused also becomes less
-						new_meter[i] += give			# increase the allocation
-					# end if
-				# end for
-			# end if
-		# end for
-
-		be = 4	# BE flow
-		if sum(list(need.values())[:-1]) > 0:
-			for i in need:
-				if i == be:
-					break
-				if need[i] > 0 and new_meter[be] > 0:
-					give = min(need[i], new_meter[be])
-					need[i] -= give
-					unused[be] = 0
-					new_meter[i] += give
-					new_meter[be] -= give
-				# end if
-			# end for
-		# end if
-		return new_meter
-	#end def
-
-
-	def meterAllocationAFQoS(self, allocated, current):
-		need = {}
-		unused = {}
-		for ids in allocated:
-			need[ids] = current[ids] - allocated[ids] if current[ids] >= allocated[ids] else 0
-			unused[ids] = allocated[ids] - current[ids] if current[ids] < allocated[ids] else 0
 		# end for
 
 		if sum(need.values()) <= sum(unused.values()):  # need is less than unused
@@ -203,12 +162,6 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
 			percent_need[ids] = 0 if total_need == 0 else round(need[ids] / total_need, round_off)
 		# end for
 
-		# calculate the initial meters - divide the need[:-1] to unused[:].
-		# if the need[:-1] > unused[:], then all the unused bw will be used up
-		# and need[:-1] will still be > 0. in that case, expand the need[:-1] to
-		# the BE traffic. if the need[:-1] < unused, then need[:-1] will be satisfied
-		# and unused[:] will be > 0 and so the BE traffic (if it needs more bw),
-		# can be expanded to the priority traffic
 		total_unused = sum(unused.values())
 		rem_unused = sum(unused.values())
 		[need, new_meter, rem_unused] = self.allocation(need, new_meter, be, percent_need, total_unused, rem_unused, round_off)
@@ -383,7 +336,7 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
 			if dpid == 3:
 				self.prev_flow3[ids] = current_flow[ids]
 
-		# make sure there is enough values in the queue
+		# make sure there are enough values in the queue
 		for ids in meter_ids:
 			if len(self.rate_queue2[ids]) < self.pocket or len(self.rate_queue3[ids]) < self.pocket:
 				return
@@ -402,7 +355,6 @@ class SimpleMonitor13(simple_switch_13.SimpleSwitch13):
 
 
 	def getMeterRates(self):
-		# update this function later to get the meter rates dynamically from the switch
 		self.configured_meters[1] = 8000
 		self.configured_meters[2] = 6000
 		self.configured_meters[3] = 4000
